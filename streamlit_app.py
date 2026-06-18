@@ -5,9 +5,10 @@ import streamlit as st
 st.set_page_config(page_title="Slide Grid Puzzle", page_icon="🧩", layout="centered")
 
 # Keep enough legal moves to randomize while guaranteeing solvable boards.
-SHUFFLE_MOVES_PER_CELL = 30
+SHUFFLE_ITERATIONS_PER_CELL = 30
 # Gives players room for strategy without making losses too rare.
 MAX_MOVES_PER_CELL = 4
+GAME_INSTRUCTIONS = "Slide numbered tiles into order. Use strategy before you run out of moves."
 
 
 def board_cells(size: int) -> int:
@@ -37,13 +38,14 @@ def make_shuffled_board(size: int) -> list[int]:
     solved = solved_board(size)
     board = solved.copy()
     empty_index = len(board) - 1
-    for _ in range(board_cells(size) * SHUFFLE_MOVES_PER_CELL):
+    for _ in range(board_cells(size) * SHUFFLE_ITERATIONS_PER_CELL):
         swap_index = random.choice(get_neighbors(empty_index, size))
         board[empty_index], board[swap_index] = board[swap_index], board[empty_index]
         empty_index = swap_index
-    if board == solved:
+    while board == solved:
         swap_index = random.choice(get_neighbors(empty_index, size))
         board[empty_index], board[swap_index] = board[swap_index], board[empty_index]
+        empty_index = swap_index
     return board
 
 
@@ -175,7 +177,7 @@ if "empty_index" not in st.session_state:
 st.markdown('<div class="game-shell"><div class="game-card">', unsafe_allow_html=True)
 st.markdown("<h1>🧩 Slide Grid Puzzle</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<div class='game-note'>Slide numbered tiles into order. Use strategy before you run out of moves.</div>",
+    f"<div class='game-note'>{GAME_INSTRUCTIONS}</div>",
     unsafe_allow_html=True,
 )
 
