@@ -4,6 +4,9 @@ import streamlit as st
 
 st.set_page_config(page_title="Slide Grid Puzzle", page_icon="🧩", layout="centered")
 
+SHUFFLE_MULTIPLIER = 30
+MOVE_LIMIT_MULTIPLIER = 4
+
 
 def solved_board(size: int) -> list[int]:
     return [*range(1, size * size), 0]
@@ -26,7 +29,7 @@ def get_neighbors(index: int, size: int) -> list[int]:
 def make_shuffled_board(size: int) -> list[int]:
     board = solved_board(size)
     empty_index = len(board) - 1
-    for _ in range(size * size * 30):
+    for _ in range(size * size * SHUFFLE_MULTIPLIER):
         swap_index = random.choice(get_neighbors(empty_index, size))
         board[empty_index], board[swap_index] = board[swap_index], board[empty_index]
         empty_index = swap_index
@@ -61,7 +64,7 @@ def start_game(size: int) -> None:
     st.session_state.board_size = size
     st.session_state.board = make_shuffled_board(size)
     st.session_state.moves_used = 0
-    st.session_state.move_limit = size * size * 4
+    st.session_state.move_limit = size * size * MOVE_LIMIT_MULTIPLIER
     st.session_state.phase = "active"
 
 
