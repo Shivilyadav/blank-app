@@ -5,9 +5,9 @@ import streamlit as st
 st.set_page_config(page_title="Slide Grid Puzzle", page_icon="🧩", layout="centered")
 
 # Keep enough legal moves to randomize while guaranteeing solvable boards.
-SHUFFLE_MULTIPLIER = 30
+SHUFFLE_MOVES_PER_CELL = 30
 # Gives players room for strategy without making losses too rare.
-MOVE_LIMIT_MULTIPLIER = 4
+MAX_MOVES_PER_CELL = 4
 
 
 def board_cells(size: int) -> int:
@@ -33,10 +33,11 @@ def get_neighbors(index: int, size: int) -> list[int]:
 
 
 def make_shuffled_board(size: int) -> list[int]:
+    """Create a solvable shuffled board using random legal blank-tile moves."""
     solved = solved_board(size)
     board = solved.copy()
     empty_index = len(board) - 1
-    for _ in range(board_cells(size) * SHUFFLE_MULTIPLIER):
+    for _ in range(board_cells(size) * SHUFFLE_MOVES_PER_CELL):
         swap_index = random.choice(get_neighbors(empty_index, size))
         board[empty_index], board[swap_index] = board[swap_index], board[empty_index]
         empty_index = swap_index
@@ -51,6 +52,7 @@ def is_solved(board: list[int], size: int) -> bool:
 
 
 def move_tile(value: int) -> bool:
+    """Attempt to move a tile value; returns True when a legal move is applied."""
     if st.session_state.phase != "active":
         return False
     board = st.session_state.board
@@ -72,11 +74,12 @@ def move_tile(value: int) -> bool:
 
 
 def start_game(size: int) -> None:
+    """Reset session state and start a new game for the selected board size."""
     st.session_state.board_size = size
     st.session_state.board = make_shuffled_board(size)
     st.session_state.empty_index = st.session_state.board.index(0)
     st.session_state.moves_used = 0
-    st.session_state.move_limit = board_cells(size) * MOVE_LIMIT_MULTIPLIER
+    st.session_state.move_limit = board_cells(size) * MAX_MOVES_PER_CELL
     st.session_state.phase = "active"
 
 
