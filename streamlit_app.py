@@ -8,8 +8,12 @@ SHUFFLE_MULTIPLIER = 30
 MOVE_LIMIT_MULTIPLIER = 4
 
 
+def board_cells(size: int) -> int:
+    return size * size
+
+
 def solved_board(size: int) -> list[int]:
-    return [*range(1, size * size), 0]
+    return [*range(1, board_cells(size)), 0]
 
 
 def get_neighbors(index: int, size: int) -> list[int]:
@@ -27,20 +31,21 @@ def get_neighbors(index: int, size: int) -> list[int]:
 
 
 def make_shuffled_board(size: int) -> list[int]:
-    board = solved_board(size)
+    solved = solved_board(size)
+    board = solved.copy()
     empty_index = len(board) - 1
-    for _ in range(size * size * SHUFFLE_MULTIPLIER):
+    for _ in range(board_cells(size) * SHUFFLE_MULTIPLIER):
         swap_index = random.choice(get_neighbors(empty_index, size))
         board[empty_index], board[swap_index] = board[swap_index], board[empty_index]
         empty_index = swap_index
-    if board == solved_board(size):
+    if board == solved:
         swap_index = random.choice(get_neighbors(empty_index, size))
         board[empty_index], board[swap_index] = board[swap_index], board[empty_index]
     return board
 
 
-def is_solved(board: list[int]) -> bool:
-    return board == solved_board(int(len(board) ** 0.5))
+def is_solved(board: list[int], size: int) -> bool:
+    return board == solved_board(size)
 
 
 def move_tile(value: int) -> bool:
@@ -54,7 +59,7 @@ def move_tile(value: int) -> bool:
         return False
     board[empty_index], board[tile_index] = board[tile_index], board[empty_index]
     st.session_state.moves_used += 1
-    st.session_state.phase = "won" if is_solved(board) else "active"
+    st.session_state.phase = "won" if is_solved(board, size) else "active"
     if st.session_state.moves_used >= st.session_state.move_limit and st.session_state.phase != "won":
         st.session_state.phase = "lost"
     return True
@@ -64,7 +69,7 @@ def start_game(size: int) -> None:
     st.session_state.board_size = size
     st.session_state.board = make_shuffled_board(size)
     st.session_state.moves_used = 0
-    st.session_state.move_limit = size * size * MOVE_LIMIT_MULTIPLIER
+    st.session_state.move_limit = board_cells(size) * MOVE_LIMIT_MULTIPLIER
     st.session_state.phase = "active"
 
 
@@ -193,7 +198,7 @@ else:
                     st.markdown("</div>", unsafe_allow_html=True)
                 else:
                     st.markdown('<div class="tile-btn">', unsafe_allow_html=True)
-                    if st.button(str(tile), key=f"tile-{tile}", disabled=not game_active):
+                    if st.button(str(tile), key=f"tile-{row}-{col}-{tile}", disabled=not game_active):
                         move_tile(tile)
                         st.rerun()
                     st.markdown("</div>", unsafe_allow_html=True)
