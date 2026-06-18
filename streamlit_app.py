@@ -4,7 +4,9 @@ import streamlit as st
 
 st.set_page_config(page_title="Slide Grid Puzzle", page_icon="🧩", layout="centered")
 
+# Keep enough legal moves to randomize while guaranteeing solvable boards.
 SHUFFLE_MULTIPLIER = 30
+# Gives players room for strategy without making losses too rare.
 MOVE_LIMIT_MULTIPLIER = 4
 
 
@@ -53,21 +55,26 @@ def move_tile(value: int) -> bool:
         return False
     board = st.session_state.board
     size = st.session_state.board_size
-    empty_index = board.index(0)
+    empty_index = st.session_state.empty_index
     tile_index = board.index(value)
     if tile_index not in get_neighbors(empty_index, size):
         return False
     board[empty_index], board[tile_index] = board[tile_index], board[empty_index]
+    st.session_state.empty_index = tile_index
     st.session_state.moves_used += 1
-    st.session_state.phase = "won" if is_solved(board, size) else "active"
-    if st.session_state.moves_used >= st.session_state.move_limit and st.session_state.phase != "won":
+    if is_solved(board, size):
+        st.session_state.phase = "won"
+    elif st.session_state.moves_used >= st.session_state.move_limit:
         st.session_state.phase = "lost"
+    else:
+        st.session_state.phase = "active"
     return True
 
 
 def start_game(size: int) -> None:
     st.session_state.board_size = size
     st.session_state.board = make_shuffled_board(size)
+    st.session_state.empty_index = st.session_state.board.index(0)
     st.session_state.moves_used = 0
     st.session_state.move_limit = board_cells(size) * MOVE_LIMIT_MULTIPLIER
     st.session_state.phase = "active"
@@ -159,6 +166,8 @@ if "moves_used" not in st.session_state:
     st.session_state.moves_used = 0
 if "move_limit" not in st.session_state:
     st.session_state.move_limit = 0
+if "empty_index" not in st.session_state:
+    st.session_state.empty_index = 0
 
 st.markdown('<div class="game-shell"><div class="game-card">', unsafe_allow_html=True)
 st.markdown("<h1>🧩 Slide Grid Puzzle</h1>", unsafe_allow_html=True)
@@ -194,7 +203,7 @@ else:
             with cols[col]:
                 if tile == 0:
                     st.markdown('<div class="tile-empty">', unsafe_allow_html=True)
-                    st.button(" ", key=f"empty-{row}-{col}", disabled=True)
+                    st.button("Empty tile", key=f"empty-{row}-{col}", disabled=True)
                     st.markdown("</div>", unsafe_allow_html=True)
                 else:
                     st.markdown('<div class="tile-btn">', unsafe_allow_html=True)
